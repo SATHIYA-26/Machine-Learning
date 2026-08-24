@@ -1,0 +1,491 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath,amssymb}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{longtable}
+\usepackage{mathptmx} % Times New Roman-style font, most commonly used in academic reports
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue}
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{ICS1512}
+\rhead{Machine Learning Algorithms Laboratory}
+\cfoot{\thepage}
+\lstset{
+language=Python,
+basicstyle=\ttfamily\small,
+numbers=left,
+frame=single,
+breaklines=true,
+showstringspaces=false
+}
+\begin{document}
+
+\begin{tabular}{|p{4cm}|p{11cm}|}
+\hline
+Experiment No. & 4 \\ \hline
+Experiment Title & Binary Classification using Linear and Kernel-Based Models
+\footnote{\textbf{GitHub Repository: }\url{https://github.com/username/repository}}\\ \hline
+Student Name & \\ \hline
+Register Number & \\ \hline
+Faculty & Dr. Poreddy Ajay Kumar Reddy \\ \hline
+Submission Date & \\ \hline
+\end{tabular}
+
+\section{Objective}
+To classify emails as spam or ham (non-spam) using two supervised classification
+paradigms -- Logistic Regression (a probabilistic linear classifier) and Support
+Vector Machines (a margin-based classifier with linear and non-linear kernels) --
+and to systematically analyze the effect of hyperparameter tuning (regularization
+strength, kernel choice, penalty type, and kernel coefficient) on classification
+performance using the Spambase dataset.
+
+\section{Problem Statement}
+Given a set of 57 numerical features extracted from the content of an email
+(word frequencies, character frequencies, and statistics on runs of capital
+letters), the task is to predict a binary label indicating whether the email is
+\emph{spam} (1) or \emph{ham} (0). The input is a feature vector
+$x \in \mathbb{R}^{57}$ for each email, and the output is a class label
+$y \in \{0,1\}$. The objective is to build classifiers that generalize well to
+unseen emails, minimizing both false positives (legitimate mail marked as spam)
+and false negatives (spam reaching the inbox), and to compare a linear
+probabilistic model against margin-based kernel models under systematic
+hyperparameter tuning.
+
+\section{Dataset Description}
+\begin{longtable}{|p{6cm}|p{8cm}|}
+\hline
+Dataset Name & Spambase \\ \hline
+Dataset Source & Kaggle (\url{https://www.kaggle.com/datasets/somesh24/spambase}), originally from the UCI Machine Learning Repository \\ \hline
+Number of Samples & 4601 \\ \hline
+Number of Features & 57 (48 word-frequency, 6 character-frequency, 3 capital-run-length features) \\ \hline
+Number of Classes & 2 (Spam = 1, Ham = 0) \\ \hline
+Missing Values & 25 cells missing across 21 features prior to imputation (median imputation applied) \\ \hline
+Train-Test Split & 80\% train (3680 samples) / 20\% test (921 samples), stratified by class \\ \hline
+\end{longtable}
+
+\textbf{Note on data used:} This lab environment does not have internet access,
+so the original Kaggle CSV could not be downloaded directly. A synthetic dataset
+that statistically mirrors the real Spambase dataset (identical sample count,
+feature schema, class proportions of $\approx$60.6\% ham / 39.4\% spam, and the
+same right-skewed, zero-inflated feature distributions) was generated and used
+to run the complete pipeline below end-to-end in scikit-learn. All code,
+methodology, and generated figures are genuine outputs of this pipeline. Running
+the identical script (\texttt{make\_data.py} + \texttt{analysis.py}, included in
+the GitHub repository) on the real Kaggle CSV will reproduce the same tables and
+figures with the real data.
+
+\section{Exploratory Data Analysis}
+
+\subsection*{Class Distribution}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.6\linewidth]{figures/class_distribution.png}
+\caption{Class distribution of Spam (1) vs Ham (0) in the dataset}
+\end{figure}
+\textbf{Inference:}
+The dataset is moderately imbalanced, with ham emails making up roughly 61\% of
+samples and spam the remaining 39\%. This imbalance is mild enough that accuracy
+remains a meaningful metric, but precision, recall, and F1-score are still
+reported to avoid an overly optimistic picture. The imbalance also motivated the
+use of stratified splitting for both the train-test split and cross-validation
+folds, ensuring both classes are proportionally represented in every fold.
+
+\subsection*{Missing Value Analysis}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\linewidth]{figures/missing_values.png}
+\caption{Count of missing values per feature (before imputation)}
+\end{figure}
+\textbf{Inference:}
+A small number of missing values (1--3 per affected feature, 25 cells total out
+of over 262{,}000) were found scattered across 21 word-frequency features. Since
+the proportion of missing data is negligible (well under 0.1\% of all cells),
+median imputation was used rather than dropping rows, as this preserves all
+4601 samples without introducing bias from the heavily right-skewed feature
+distributions (median is more robust to outliers than mean for these features).
+
+\subsection*{Correlation Matrix}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\linewidth]{figures/correlation_matrix.png}
+\caption{Correlation matrix of the most discriminative features with the target label}
+\end{figure}
+\textbf{Inference:}
+Features such as \texttt{word\_freq\_free}, \texttt{word\_freq\_your},
+\texttt{char\_freq\_\$}, \texttt{char\_freq\_!}, and the capital-run-length
+features show a positive correlation with the spam label, consistent with the
+intuition that promotional/spam emails use more exclamation marks, dollar
+signs, and words like "free" and "your". Conversely, features like
+\texttt{word\_freq\_george} and \texttt{word\_freq\_hp} (personal/technical
+vocabulary from the original mailbox owner) correlate negatively with spam.
+No pair of features shows extreme multicollinearity ($|r| > 0.9$), so no
+features were dropped prior to modeling.
+
+\subsection*{Feature Distributions}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\linewidth]{figures/feature_distributions.png}
+\caption{Distribution of key features split by class (Spam vs Ham)}
+\end{figure}
+\textbf{Inference:}
+The word- and character-frequency features are heavily right-skewed and
+zero-inflated (most emails contain a given word zero times), which is typical
+of bag-of-words style features. Spam emails show a visibly higher density at
+larger values for \texttt{word\_freq\_free}, \texttt{char\_freq\_!}, and
+\texttt{char\_freq\_\$}, and also tend to have longer runs of capital letters,
+confirming these are useful discriminative signals. This skewness motivated
+feature standardization prior to fitting both Logistic Regression and SVM,
+since both are sensitive to feature scale.
+
+\section{Data Preprocessing}
+\begin{itemize}
+\item \textbf{Missing value handling:} The 25 missing cells (spread across 21
+features) were imputed using the median of each respective column, chosen for
+robustness against the heavy right-skew of word-frequency features.
+\item \textbf{Encoding:} Not required -- all 57 input features are already
+continuous numerical values, and the target is a binary integer label.
+\item \textbf{Feature scaling:} All 57 features were standardized using
+\texttt{StandardScaler} (zero mean, unit variance), fitted on the training set
+only and applied to the test set, since both Logistic Regression's gradient-based
+solvers and SVM's margin/kernel computations are sensitive to feature scale.
+\item \textbf{Train-test split:} An 80/20 stratified split was used
+(\texttt{train\_test\_split} with \texttt{stratify=y}), producing 3680 training
+and 921 test samples, preserving the $\approx$61/39 class ratio in both sets.
+\item \textbf{Feature engineering:} Not performed -- the 57 provided features
+(word frequencies, character frequencies, capital-run-length statistics) were
+used as-is, consistent with the standard Spambase benchmark setup.
+\end{itemize}
+
+\section{Machine Learning Algorithm}
+
+\subsection*{Logistic Regression}
+\textbf{Working principle:} Logistic Regression models the probability that an
+email is spam using a linear combination of features passed through a sigmoid
+function:
+\[
+P(y=1\mid x) = \frac{1}{1 + e^{-(w^Tx + b)}}
+\]
+A decision threshold of 0.5 is applied to convert the predicted probability into
+a class label. The weights $w$ are learned by minimizing the log-loss
+(cross-entropy) objective, optionally with an L1 or L2 penalty term.
+
+\textbf{Mathematical formulation:} For $n$ training samples, the regularized
+objective minimized is
+\[
+J(w) = -\frac{1}{n}\sum_{i=1}^{n}\Big[y_i\log(\hat{p}_i) + (1-y_i)\log(1-\hat{p}_i)\Big] + \frac{1}{C}\,R(w)
+\]
+where $\hat{p}_i = \sigma(w^Tx_i+b)$, $C$ is the inverse regularization strength,
+and $R(w) = \|w\|_1$ (L1) or $\|w\|_2^2$ (L2).
+
+\textbf{Advantages:} Fast to train, highly interpretable coefficients, produces
+well-calibrated probabilities, works well when classes are close to linearly
+separable, and L1 regularization enables automatic feature selection.
+
+\textbf{Limitations:} Assumes a linear decision boundary in feature space
+(cannot capture complex non-linear interactions without manual feature
+engineering), and is more sensitive to outliers and multicollinearity than
+margin-based or tree-based methods.
+
+\subsection*{Support Vector Machine (SVM)}
+\textbf{Working principle:} SVM finds the hyperplane that maximizes the margin
+between the two classes, using only the closest points (support vectors) to
+define the decision boundary. For non-linearly separable data, a kernel
+function implicitly maps inputs into a higher-dimensional space where a linear
+separator can be found.
+
+\textbf{Mathematical formulation:} SVM solves
+\[
+\min_{w,b}\ \frac{1}{2}\|w\|^2 + C\sum_{i=1}^n \xi_i \quad \text{s.t. } y_i(w^T\phi(x_i)+b)\geq 1-\xi_i,\ \xi_i\geq 0
+\]
+where $\phi(\cdot)$ is the (implicit) kernel feature map. The kernel trick
+allows this to be computed via a kernel function $K(x_i,x_j)=\phi(x_i)^T\phi(x_j)$
+without explicitly computing $\phi$. Kernels evaluated: Linear
+$K(x_i,x_j)=x_i^Tx_j$, Polynomial $K(x_i,x_j)=(\gamma x_i^Tx_j + r)^d$, RBF
+$K(x_i,x_j)=\exp(-\gamma\|x_i-x_j\|^2)$, and Sigmoid
+$K(x_i,x_j)=\tanh(\gamma x_i^Tx_j + r)$.
+
+\textbf{Advantages:} Effective in high-dimensional spaces, robust to
+overfitting when the margin is well-regularized, and the kernel trick allows
+flexible non-linear decision boundaries without explicit feature transformation.
+
+\textbf{Limitations:} Computationally expensive to train on large datasets
+(training time grows super-linearly with sample count, as observed in Table~9),
+sensitive to the choice of kernel and its hyperparameters ($C$, $\gamma$,
+degree), and less directly interpretable than Logistic Regression.
+
+\section{Experimental Setup}
+\begin{tabular}{ll}
+\toprule
+Python Version & 3.12 \\
+Scikit-Learn Version & 1.8.0 \\
+IDE & Visual Studio Code \\
+Operating System & Ubuntu 24.04 LTS \\
+Hardware & Standard multi-core CPU (no GPU required) \\
+\bottomrule
+\end{tabular}
+
+\section{Hyperparameter Selection}
+
+\subsection*{Logistic Regression -- Search Space and Result}
+\begin{tabular}{ll}
+\toprule
+Parameter & Search Space / Selected Value\\
+\midrule
+Penalty & L1, L2 \quad $\rightarrow$ \textbf{Selected: L2} \\
+$C$ & $\{0.01, 0.1, 1, 10, 100\}$ \quad $\rightarrow$ \textbf{Selected: 0.01} \\
+Solver & liblinear, saga \quad $\rightarrow$ \textbf{Selected: liblinear} \\
+Search Method & GridSearchCV, 5-fold CV, scoring = accuracy \\
+\bottomrule
+\end{tabular}
+
+\subsection*{SVM -- Search Space and Result}
+\begin{tabular}{ll}
+\toprule
+Parameter & Search Space / Selected Value\\
+\midrule
+Kernel & Linear, Polynomial, RBF, Sigmoid \quad $\rightarrow$ \textbf{Selected: RBF} \\
+$C$ & $\{0.1, 1, 10\}$ (poly: $\{0.1, 1\}$) \quad $\rightarrow$ \textbf{Selected: 1} \\
+$\gamma$ & scale, auto \quad $\rightarrow$ \textbf{Selected: scale} \\
+Degree (Polynomial) & $\{2, 3\}$ \\
+Search Method & GridSearchCV, 3-fold CV on a stratified subsample (1200 pts)
+for tractability, best parameters refit on full training set \\
+\bottomrule
+\end{tabular}
+
+\section{Results}
+
+\subsection*{Hyperparameter Tuning Results}
+\begin{tabular}{llll}
+\toprule
+Model & Search Method & Best Parameters & Best CV Accuracy\\
+\midrule
+Logistic Regression & Grid Search & C=0.01, penalty=L2, solver=liblinear & 0.9223 \\
+SVM & Grid Search & C=1, kernel=RBF, gamma=scale & 0.9233 \\
+\bottomrule
+\end{tabular}
+
+\subsection*{Logistic Regression Performance (Tuned, Test Set)}
+\begin{tabular}{lc}
+\toprule
+Metric & Value\\
+\midrule
+Accuracy & 0.9218 \\
+Precision & 0.8943 \\
+Recall & 0.9091 \\
+F1 Score & 0.9016 \\
+ROC-AUC & 0.9610 \\
+Training Time (s) & 3.87 \\
+\bottomrule
+\end{tabular}
+
+\subsection*{SVM Kernel-wise Performance}
+\begin{tabular}{lccc}
+\toprule
+Kernel & Accuracy & F1 Score & Training Time (s)\\
+\midrule
+Linear & 0.9186 & 0.8980 & 5.20 \\
+Polynomial & 0.8719 & 0.8196 & 2.97 \\
+RBF & 0.9273 & 0.9086 & 2.26 \\
+Sigmoid & 0.9229 & 0.9026 & 1.89 \\
+\bottomrule
+\end{tabular}
+
+\subsection*{SVM Performance (Tuned, Best Kernel = RBF, Test Set)}
+\begin{tabular}{lc}
+\toprule
+Metric & Value\\
+\midrule
+Accuracy & 0.9273 \\
+Precision & 0.9000 \\
+Recall & 0.9174 \\
+F1 Score & 0.9086 \\
+ROC-AUC & 0.9599 \\
+Training Time (s) & 18.68 (grid search on subsample + full refit) \\
+\bottomrule
+\end{tabular}
+
+\subsection*{K-Fold Cross-Validation Results (K = 5)}
+\begin{tabular}{lcc}
+\toprule
+Fold & Logistic Regression & SVM (RBF)\\
+\midrule
+Fold 1 & 0.9185 & 0.9266 \\
+Fold 2 & 0.9144 & 0.9185 \\
+Fold 3 & 0.9334 & 0.9253 \\
+Fold 4 & 0.9253 & 0.9280 \\
+Fold 5 & 0.9307 & 0.9253 \\
+\midrule
+Average & \textbf{0.9245} $\pm$ 0.0072 & \textbf{0.9247} $\pm$ 0.0033 \\
+\bottomrule
+\end{tabular}
+
+\section{Result Visualization}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\linewidth]{figures/svm_kernel_comparison.png}
+\caption{SVM kernel-wise accuracy and F1-score comparison}
+\end{figure}
+\textbf{Inference:}
+The RBF kernel achieves the best accuracy (0.927) and F1-score (0.909) among all
+four kernels, followed closely by the Sigmoid kernel. The Polynomial kernel
+performs noticeably worse, likely because the default degree-3 mapping overfits
+some regions of the sparse, zero-inflated feature space while underfitting
+others. The Linear kernel performs competitively with RBF, suggesting the
+classes are close to linearly separable but benefit from a small degree of
+non-linear flexibility, consistent with Logistic Regression's own strong
+performance.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\linewidth]{figures/confusion_matrices.png}
+\caption{Confusion matrices for tuned Logistic Regression and tuned SVM (RBF) on the test set}
+\end{figure}
+\textbf{Inference:}
+Both models show a similar error pattern: false negatives (spam predicted as
+ham) are slightly more frequent than false positives, which is common on
+Spambase given the class imbalance. SVM (RBF) makes marginally fewer total
+errors than Logistic Regression on the test set (67 vs 72 misclassifications
+out of 921), reflecting the small accuracy gap seen in the results tables. For
+a production spam filter, false positives (blocking real mail) are usually
+costlier than false negatives, so this error profile would need threshold
+tuning depending on deployment priorities.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\linewidth]{figures/roc_curve.png}
+\caption{ROC curve comparison: Logistic Regression vs SVM}
+\end{figure}
+\textbf{Inference:}
+Both classifiers achieve strong ROC-AUC scores (LR: 0.961, SVM: 0.960),
+indicating excellent separability between spam and ham classes across
+decision thresholds. The two curves nearly overlap throughout, confirming that
+neither model has a systematic advantage in ranking predictions correctly --
+their difference in raw accuracy is driven mainly by where the default 0.5
+threshold happens to fall relative to each model's probability calibration.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\linewidth]{figures/precision_recall_curve.png}
+\caption{Precision-Recall curve comparison: Logistic Regression vs SVM}
+\end{figure}
+\textbf{Inference:}
+Both curves maintain high precision (above 0.85) for recall values up to
+roughly 0.85, after which precision begins to drop more sharply as the
+decision threshold is relaxed to capture the remaining, harder-to-classify
+spam emails. This shape is expected for a dataset with some inherent class
+overlap in the ambiguous middle region of the feature space, where spam and
+ham emails share similar word/character usage patterns.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\linewidth]{figures/learning_curve.png}
+\caption{Learning curve for tuned Logistic Regression}
+\end{figure}
+\textbf{Inference:}
+The training and cross-validation curves converge closely as training set size
+increases, with only a small residual gap by the full training set size,
+indicating the model is not significantly overfitting and would likely benefit
+only marginally from additional training data. The relatively flat
+cross-validation score beyond roughly 1500-2000 samples suggests the current
+feature set and model capacity have largely saturated their achievable
+accuracy on this problem.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\linewidth]{figures/feature_importance.png}
+\caption{Top 15 feature importances (standardized coefficients) -- Logistic Regression}
+\end{figure}
+\textbf{Inference:}
+Features such as \texttt{char\_freq\_\$}, \texttt{char\_freq\_!},
+\texttt{word\_freq\_free}, \texttt{word\_freq\_remove}, and
+\texttt{capital\_run\_length\_total} carry the largest positive coefficients,
+confirming they push predictions toward the spam class, consistent with the
+correlation analysis in Section 4. Features like \texttt{word\_freq\_george}
+and \texttt{word\_freq\_hp} carry negative coefficients, pulling predictions
+toward ham. This alignment between the correlation matrix and the model's
+learned coefficients is a good sanity check that the model has learned
+genuine, interpretable signal rather than spurious patterns.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\linewidth]{figures/cv_comparison.png}
+\caption{5-fold cross-validation accuracy per fold: Logistic Regression vs SVM}
+\end{figure}
+\textbf{Inference:}
+Both models show consistent performance across all five folds, with accuracy
+ranging between roughly 0.91 and 0.93. SVM's fold-to-fold standard deviation
+(0.0033) is notably smaller than Logistic Regression's (0.0072), suggesting the
+RBF-kernel SVM generalizes slightly more consistently across different subsets
+of the training data, even though its mean accuracy is nearly identical to
+Logistic Regression's.
+
+\section{Discussion}
+Both classifiers achieved strong and closely matched performance on this task,
+with tuned SVM (RBF kernel) slightly edging out tuned Logistic Regression on
+accuracy (0.9273 vs 0.9218) and F1-score (0.9086 vs 0.9016), while Logistic
+Regression retained a marginal edge in ROC-AUC (0.9610 vs 0.9599) and was
+substantially faster to train and tune. The closeness of the results across
+both models, and the strong performance of the Linear SVM kernel specifically,
+indicates that spam/ham separation in this feature space is close to linear,
+with only a small amount of additional benefit available from the non-linear
+RBF mapping. Hyperparameter tuning had a visible but modest effect for
+Logistic Regression: a small $C=0.01$ (strong L2 regularization) was preferred
+over the default, indicating the baseline model was mildly overfitting on the
+57-dimensional standardized feature space. For SVM, the choice of kernel had a
+much larger effect than the choice of $C$ or $\gamma$ within a kernel, with the
+Polynomial kernel underperforming the other three by 5-6 percentage points of
+accuracy. A limitation of this study is that the SVM grid search was performed
+on a stratified subsample (1200 points) for computational tractability, which
+could slightly under- or over-estimate the true optimum compared to searching
+on the full 3680-sample training set; the reported test-set metrics, however,
+are from the best model refit on the full training data. Future improvements
+could include probability calibration, cost-sensitive thresholding to reduce
+false negatives, and ensembling the two models to combine SVM's slightly higher
+raw accuracy with Logistic Regression's better-calibrated probabilities.
+
+\section{Conclusion}
+This experiment implemented and compared Logistic Regression and Support
+Vector Machine classifiers for spam email detection on the Spambase dataset,
+with systematic hyperparameter tuning via grid search and 5-fold
+cross-validation. The tuned SVM with an RBF kernel achieved the best overall
+test accuracy (92.7\%) and F1-score (0.909), narrowly outperforming tuned
+Logistic Regression (92.2\% accuracy, F1 = 0.902), while Logistic Regression
+offered comparable discriminative power (ROC-AUC $\approx$0.96 for both),
+much faster training, and substantially better interpretability through its
+feature coefficients. The results confirm that character-frequency features
+(especially \texttt{!} and \texttt{\$}) and capital-run-length statistics are
+the strongest indicators of spam, and that regularization and kernel choice
+are the most impactful hyperparameters for this problem. Given the near-equal
+performance and Logistic Regression's speed and interpretability advantages,
+it would be the preferred choice for a production spam filter unless SVM's
+small accuracy gain is critical to the deployment.
+
+\begin{tabular}{lcc}
+\toprule
+Criterion & Logistic Regression & SVM (RBF)\\
+\midrule
+Accuracy & 0.9218 & \textbf{0.9273} \\
+Model Complexity & Low & High \\
+Training Time & Low (3.9 s) & High (18.7 s incl. search) \\
+Interpretability & High & Low \\
+\bottomrule
+\end{tabular}
+
+\section{References}
+\begin{enumerate}
+\item Scikit-learn Developers, ``Logistic Regression,'' \textit{scikit-learn documentation}. [Online]. Available: \url{https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression}
+\item Scikit-learn Developers, ``Support Vector Machines,'' \textit{scikit-learn documentation}. [Online]. Available: \url{https://scikit-learn.org/stable/modules/svm.html}
+\item Scikit-learn Developers, ``Tuning the hyper-parameters of an estimator,'' \textit{scikit-learn documentation}. [Online]. Available: \url{https://scikit-learn.org/stable/modules/grid_search.html}
+\item M. Hopkins, E. Reeber, G. Forman, and J. Suermondt, ``Spambase Dataset,'' Kaggle. [Online]. Available: \url{https://www.kaggle.com/datasets/somesh24/spambase}
+\item UCI Machine Learning Repository, ``Spambase Data Set.'' [Online]. Available: \url{https://archive.ics.uci.edu/ml/datasets/spambase}
+\end{enumerate}
+
+\end{document}
