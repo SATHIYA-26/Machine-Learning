@@ -1,0 +1,2215 @@
+\documentclass[12pt,a4paper]{article}
+
+% =====================================================
+% Mathematics
+% =====================================================
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{mathtools}
+
+% =====================================================
+% Graphics
+% =====================================================
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{subcaption}
+
+% =====================================================
+% Tables
+% =====================================================
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{makecell}
+\usepackage{adjustbox}
+
+% =====================================================
+% Lists
+% =====================================================
+\usepackage{enumitem}
+
+% =====================================================
+% Page Layout
+% =====================================================
+\usepackage[a4paper,margin=1in]{geometry}
+
+% =====================================================
+% Hyperlinks
+% =====================================================
+\usepackage[hidelinks]{hyperref}
+
+% =====================================================
+% Captions
+% =====================================================
+\usepackage{caption}
+
+% =====================================================
+% Typography
+% =====================================================
+\usepackage{microtype}
+\usepackage{setspace}
+\onehalfspacing
+
+% =====================================================
+% Paragraph Formatting
+% =====================================================
+\usepackage{parskip}
+
+% =====================================================
+% Colors
+% =====================================================
+\usepackage{xcolor}
+
+% =====================================================
+% Float Control
+% =====================================================
+\usepackage{placeins}
+
+% =====================================================
+% Landscape Pages (Wide Tables)
+% =====================================================
+\usepackage{pdflscape}
+
+% =====================================================
+% Headers & Footers
+% =====================================================
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot[C]{\thepage}
+\begin{document}
+
+\begin{center}
+
+{\Large\textbf{ICS1512 Machine Learning Algorithms Laboratory}}
+
+\vspace{1cm}
+\begin{adjustbox}{width=\textwidth}
+\begin{tabular}{ll}
+\textbf{Experiment No.} & 1\\[0.3cm]
+
+\textbf{Experiment Title} &
+Working with Python Packages -- NumPy, SciPy, Scikit-Learn, Matplotlib\\[0.3cm]
+
+\textbf{Student Name} & Sathiya Priyan\\[0.3cm]
+
+\textbf{Register Number} & 3122247001058\\[0.3cm]
+
+\textbf{Faculty} & Dr.\ Poreddy Ajay Kumar Reddy\\[0.3cm]
+
+\textbf{Submission Date} & 30th June 2026
+
+\end{tabular}
+\end{adjustbox}
+\end{center}
+
+\vspace{1cm}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Objective}
+
+To explore the core functions and methods offered by five foundational Python
+libraries used in Machine Learning:
+
+\begin{itemize}
+    \item NumPy
+    \item Pandas
+    \item SciPy
+    \item Scikit-Learn
+    \item Matplotlib
+\end{itemize}
+
+The experiment applies these libraries across a complete end-to-end machine
+learning workflow.
+
+Five heterogeneous public datasets were downloaded from Kaggle:
+
+\begin{enumerate}
+    \item Iris Dataset
+    \item Pima Diabetes Dataset
+    \item Loan Amount Prediction Dataset
+    \item Email Spam Classification Dataset
+    \item Handwritten Character Recognition Dataset
+\end{enumerate}
+
+For each dataset,
+
+\begin{itemize}
+    \item the appropriate machine learning task
+          (classification or regression),
+    \item a suitable feature-selection strategy,
+    \item and an appropriate learning algorithm
+\end{itemize}
+
+were identified and empirically validated by benchmarking multiple models.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Problem Statement}
+
+Given five raw and unprocessed datasets that differ substantially in
+
+\begin{itemize}
+    \item size,
+    \item dimensionality,
+    \item and modality,
+\end{itemize}
+
+ranging from
+
+\begin{itemize}
+    \item a clean 4-feature numerical Iris dataset,
+    \item a 1024-dimensional flattened handwritten image dataset,
+    \item and a 3000-dimensional bag-of-words Email Spam dataset,
+\end{itemize}
+
+the objective is to perform the following tasks:
+
+\begin{enumerate}[label=\textbf{(\roman*)}]
+\item Load and explore each dataset using summary statistics and
+visualizations.
+
+\item Identify the correct machine learning task for each dataset:
+
+\begin{itemize}
+    \item Supervised Classification
+    \item Supervised Regression
+\end{itemize}
+
+\item Perform suitable preprocessing:
+
+\begin{itemize}
+    \item Missing-value imputation
+    \item Categorical encoding
+    \item Feature scaling
+    \item ANOVA-based feature selection for high-dimensional datasets
+\end{itemize}
+
+\item Split each dataset into training and testing partitions.
+
+\item Train representative Scikit-Learn algorithms.
+
+\item Evaluate and compare their performance using task-appropriate
+performance metrics.
+\end{enumerate}
+
+The expected output of the experiment is
+
+\begin{itemize}
+    \item a task-identification table for all five datasets,
+    \item together with quantitative performance benchmarks for every
+    algorithm evaluated.
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{ML Task Identification}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The appropriate machine learning task, feature-selection strategy, and the
+empirically best-performing algorithm for each dataset are summarized in
+Table~\ref{tab:ml_tasks}.
+
+\begin{table}[H]
+\centering
+\caption{Machine Learning Task Identification}
+\label{tab:ml_tasks}
+
+\renewcommand{\arraystretch}{1.4}
+
+\begin{adjustbox}{width=\textwidth}
+\begin{tabular}{>{\raggedright\arraybackslash}p{3cm}
+                >{\raggedright\arraybackslash}p{4cm}
+                >{\raggedright\arraybackslash}p{4.2cm}
+                >{\raggedright\arraybackslash}p{4.5cm}}
+\toprule
+
+\textbf{Dataset} &
+\textbf{Type of ML Task} &
+\textbf{Feature Selection Technique} &
+\textbf{Suitable ML Algorithm (Empirically Best)} \\
+
+\midrule
+
+Iris Dataset &
+Supervised, multi-class classification (3 classes) &
+Not required -- only four low-noise, highly discriminative features &
+Support Vector Machine (Linear Kernel), achieving 100\% test accuracy. \\
+
+\midrule
+
+Loan Amount Prediction &
+Supervised regression (continuous target) &
+Not applied -- only five numeric predictors remain after preprocessing; all were retained &
+Gradient Boosting Regressor with the best performance,
+$R^2 = 0.214$. \\
+
+\midrule
+
+Predicting Diabetes &
+Supervised binary classification &
+Not applied -- all eight clinical features are domain relevant &
+Gradient Boosting / Random Forest,
+approximately $75\%$ accuracy. \\
+
+\midrule
+
+Email Spam Classification &
+Supervised binary classification with high-dimensional bag-of-words features &
+SelectKBest using the ANOVA F-test, selecting the top $300$ features out of $3000$ &
+Random Forest with
+$96.04\%$ accuracy, ROC-AUC$=0.993$ \\
+
+\midrule
+
+Handwritten Character Recognition
+(62 classes) &
+Supervised multi-class classification using high-dimensional pixel features &
+SelectKBest using the ANOVA F-test, selecting the top $100$ features out of $1024$ &
+Random Forest with $35.19\%$ accuracy (best among the classical machine learning models tested). A Convolutional Neural Network (CNN) is recommended for production use. \\
+
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Dataset Description}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The datasets used throughout this experiment differ significantly in terms of
+size, dimensionality, feature types, and learning objectives.
+Table~\ref{tab:dataset_description} summarizes the important
+characteristics of every dataset.
+
+\begin{table}[H]
+\centering
+\caption{Dataset Description}
+\label{tab:dataset_description}
+
+\renewcommand{\arraystretch}{1.35}
+
+\begin{adjustbox}{width=\textwidth}
+\begin{tabular}{>{\raggedright\arraybackslash}p{2.6cm}
+                >{\raggedright\arraybackslash}p{3.8cm}
+                >{\centering\arraybackslash}p{1.1cm}
+                >{\centering\arraybackslash}p{1.2cm}
+                >{\raggedright\arraybackslash}p{2.4cm}
+                >{\raggedright\arraybackslash}p{2.4cm}
+                >{\centering\arraybackslash}p{2cm}}
+
+\toprule
+
+\textbf{Dataset} &
+\textbf{Source} &
+\textbf{Samples} &
+\textbf{Features} &
+\textbf{Classes / Target} &
+\textbf{Missing Values} &
+\textbf{Train/Test Split} \\
+
+\midrule
+
+Iris &
+Kaggle -- Iris Species Dataset &
+150 &
+4 Numeric &
+3 Species &
+None &
+80\% / 20\% (Stratified) \\
+
+\midrule
+
+Diabetes &
+Kaggle -- Pima Indians Diabetes Database &
+768 &
+8 Numeric &
+Binary Outcome &
+None &
+80\% / 20\% (Stratified) \\
+
+\midrule
+
+Loan Amount Prediction &
+Kaggle Loan Prediction Dataset
+(\texttt{train\_u6lujuX\_CVtuZ9i.csv}) &
+592 &
+11 Mixed &
+Continuous LoanAmount
+(in thousands) &
+Yes; Maximum missing percentage: $8.28\%$ in \texttt{Credit\_History} &
+80\% / 20\% \\
+
+\midrule
+
+Email Spam &
+Kaggle Email Spam Classification Dataset &
+5172 &
+3000 Word-count Features &
+Binary
+(Spam/Ham) &
+None &
+80\% / 20\% (Stratified) \\
+
+\midrule
+
+Handwritten Characters &
+Kaggle Handwritten Character Recognition Dataset &
+3410 &
+1024
+($32\times32$ grayscale pixels, flattened) &
+62 Classes
+
+(0--9, A--Z, a--z) &
+None &
+80\% / 20\% (Stratified) \\
+
+\bottomrule
+
+\end{tabular}
+\end{adjustbox}
+
+\end{table}
+
+\vspace{0.3cm}
+
+\noindent\textbf{Note:}
+
+The original Loan Amount dataset contained 1614 records.
+Rows having missing values in the target variable
+(\texttt{LoanAmount}) were removed, leaving a final dataset of
+592 samples for model training and evaluation.
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Exploratory Data Analysis}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+A single reusable \texttt{perform\_eda()} routine was developed to analyze every
+dataset in a consistent manner. The routine computes:
+
+\begin{itemize}
+    \item Dataset shape
+    \item Data types
+    \item Summary statistics
+    \item Missing-value counts
+    \item Outlier counts using both:
+    \begin{itemize}
+        \item Interquartile Range (IQR)
+        \item Z-score
+    \end{itemize}
+    \item Distribution plots
+    \item Boxplots
+    \item Correlation heatmaps
+    \item Target-class distribution plots
+\end{itemize}
+
+For the two high-dimensional datasets
+
+\begin{itemize}
+    \item Email Spam Dataset (3000 features)
+    \item Handwritten Character Dataset (1024 features)
+\end{itemize}
+
+the routine automatically skipped feature-wise histograms, boxplots, and
+correlation heatmaps whenever the number of features exceeded 30, since
+thousands of individual plots would be computationally expensive and difficult
+to interpret. Only the target-class distribution was visualized for these
+datasets.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Iris Dataset}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{figures/iris_histograms.png}
+    \caption{Feature-wise histograms of the Iris dataset (one-column layout, all four numeric features).}
+    \label{fig:iris_histograms}
+\end{figure}
+
+\subsubsection*{Inference}
+
+All four Iris features are either unimodal or bimodal with no missing values.
+Among them,
+
+\begin{itemize}
+    \item Petal Length
+    \item Petal Width
+\end{itemize}
+
+show a visibly bimodal (or trimodal) distribution, indicating that these
+features separate the three Iris species much more effectively than the sepal
+measurements, whose distributions overlap considerably between
+\textit{Iris-versicolor} and \textit{Iris-virginica}.
+
+This observation agrees with the well-known characteristic of the Iris dataset,
+where petal measurements are historically the strongest discriminative features.
+
+Sepal Width appears to be the most symmetric and approximately Gaussian feature
+among the four.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{figure}[H]
+\centering
+
+\begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/iris_boxplot.png}
+    \caption{Boxplots of the four Iris features.}
+    \label{fig:iris_boxplot}
+\end{minipage}
+\hfill
+\begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/iris_heatmap.png}
+    \caption{Correlation heatmap of the Iris features.}
+    \label{fig:iris_heatmap}
+\end{minipage}
+
+\end{figure}
+
+\subsubsection*{Inference}
+
+The boxplots reveal only a few mild outliers in
+\texttt{SepalWidthCm}:
+
+\begin{itemize}
+    \item 4 outliers detected using the IQR rule
+    \item 1 outlier detected using the stricter
+          $|z|>3$ criterion
+\end{itemize}
+
+No meaningful outliers are present in the remaining three features,
+confirming that the Iris dataset is essentially clean.
+
+The correlation heatmap shows that
+
+\begin{itemize}
+    \item Petal Length and Petal Width are almost perfectly correlated
+          ($r \approx 0.96$).
+
+    \item Petal Length is also strongly correlated with Sepal Length
+          ($r \approx 0.87$).
+
+    \item Petal Width is strongly correlated with Sepal Length
+          ($r \approx 0.82$).
+
+    \item Sepal Width exhibits weak and slightly negative correlations
+          with the remaining features.
+\end{itemize}
+
+The strong redundancy between Petal Length and Petal Width explains why a
+linear decision boundary is capable of separating the Iris classes almost
+perfectly.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{figures/iris_target_distribution.png}
+    \caption{Class distribution of the target variable \texttt{Species}.}
+    \label{fig:iris_target}
+\end{figure}
+
+\subsubsection*{Inference}
+
+The target variable is perfectly balanced, containing exactly
+
+\[
+50
+\]
+
+samples from each class:
+
+\begin{itemize}
+    \item Iris-setosa
+    \item Iris-versicolor
+    \item Iris-virginica
+\end{itemize}
+
+Since every class contains the same number of observations, no class-imbalance
+correction techniques such as
+
+\begin{itemize}
+    \item Oversampling
+    \item Undersampling
+    \item Class weighting
+\end{itemize}
+
+are required.
+
+Consequently, classification accuracy is an appropriate evaluation metric for
+this dataset because each class contributes equally to the overall performance.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Diabetes Dataset}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{figures/diabetes_histograms.png}
+    \caption{Feature-wise histograms of the Pima Diabetes dataset (one-column layout, all eight numeric features).}
+    \label{fig:diabetes_histograms}
+\end{figure}
+
+\subsubsection*{Inference}
+
+The feature distributions reveal several important characteristics of the
+dataset.
+
+\begin{itemize}
+
+\item \textbf{Insulin} and
+\textbf{DiabetesPedigreeFunction} exhibit heavily right-skewed
+distributions with long tails.
+
+\item \textbf{Glucose},
+\textbf{BloodPressure}, and
+\textbf{BMI} appear approximately normally distributed; however,
+each contains a noticeable spike at the value zero.
+
+\item Since a living patient cannot realistically have
+
+\begin{itemize}
+    \item zero blood pressure,
+    \item zero body mass index,
+    \item or zero glucose level,
+\end{itemize}
+
+these zero values most likely represent disguised missing values rather
+than valid physiological measurements.
+
+\item The \textbf{Age} variable is also right-skewed,
+indicating that the dataset contains more younger patients than older
+patients.
+
+\item These zero-inflated distributions contribute directly to the
+large number of outliers detected using both the IQR and Z-score methods.
+
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{figure}[H]
+\centering
+
+\begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/diabetes_boxplot.png}
+    \caption{Boxplots of the eight Diabetes features.}
+    \label{fig:diabetes_boxplot}
+\end{minipage}
+\hfill
+\begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/diabetes_heatmap.png}
+    \caption{Correlation heatmap of the Diabetes features.}
+    \label{fig:diabetes_heatmap}
+\end{minipage}
+
+\end{figure}
+
+\subsubsection*{Inference}
+
+The boxplots indicate that several variables contain a considerable number of
+outliers.
+
+\begin{itemize}
+
+\item \textbf{BloodPressure} has the largest number of detected
+outliers:
+
+\begin{itemize}
+    \item 45 outliers using the IQR rule.
+    \item 35 outliers using the Z-score criterion.
+\end{itemize}
+
+These are primarily caused by the disguised zero values identified
+earlier.
+
+\item \textbf{Insulin} contains 34 IQR outliers because of its highly
+right-skewed distribution.
+
+\end{itemize}
+
+The correlation heatmap provides additional insights into the relationships
+among the predictor variables.
+
+\begin{itemize}
+
+\item \textbf{Glucose} exhibits the strongest positive correlation with
+the target variable \texttt{Outcome}, which agrees with medical
+knowledge since elevated blood glucose is the primary indicator of
+diabetes.
+
+\item \textbf{Age} and \textbf{Pregnancies} are moderately positively
+correlated, which is biologically expected.
+
+\item No pair of predictor variables exhibits severe multicollinearity.
+
+\end{itemize}
+
+Therefore, multicollinearity is not expected to significantly affect the
+performance of the linear models evaluated in this experiment.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.65\textwidth]{figures/diabetes_target_distribution.png}
+    \caption{Class distribution of the target variable \texttt{Outcome}.}
+    \label{fig:diabetes_target}
+\end{figure}
+
+\subsubsection*{Inference}
+
+The target variable is moderately imbalanced.
+
+Approximately
+
+\[
+65\%
+\]
+
+of the observations correspond to
+
+\[
+\texttt{Outcome}=0
+\]
+
+(non-diabetic patients), while approximately
+
+\[
+35\%
+\]
+
+belong to
+
+\[
+\texttt{Outcome}=1
+\]
+
+(diabetic patients).
+
+This observation is consistent with the mean value of the target variable,
+
+\[
+\overline{\texttt{Outcome}} = 0.349,
+\]
+
+reported in the summary statistics.
+
+Because of this class imbalance, model performance was evaluated using
+multiple classification metrics instead of relying solely on overall
+accuracy.
+
+The reported evaluation metrics include
+
+\begin{itemize}
+
+\item Accuracy
+
+\item Precision
+
+\item Recall
+
+\item Weighted F1-score
+
+\end{itemize}
+
+These metrics provide a more reliable assessment of classifier performance
+under imbalanced class distributions.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Loan Amount Prediction Dataset}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{figures/loan_missing_heatmap.png}
+    \caption{Missing-value heatmap of the Loan Amount dataset (yellow indicates missing values).}
+    \label{fig:loan_missing_heatmap}
+\end{figure}
+
+\subsubsection*{Inference}
+
+Unlike the other four datasets, the Loan Amount Prediction dataset contains
+genuine missing values distributed across multiple features.
+
+The highest percentage of missing values is observed in:
+
+\begin{itemize}
+    \item \texttt{Credit\_History} -- $8.28\%$
+    \item \texttt{Self\_Employed} -- $5.24\%$
+    \item \texttt{Loan\_Amount\_Term} -- $2.36\%$
+    \item \texttt{Gender} -- approximately $2.2\%$
+    \item \texttt{Dependents} -- approximately $2.2\%$
+    \item \texttt{Married} -- $0.34\%$
+\end{itemize}
+
+The missing values are scattered throughout the dataset rather than being
+concentrated within a particular group of rows or columns.
+
+This pattern suggests that the data are most likely
+\textbf{Missing At Random (MAR)}, where applicants omitted optional
+information rather than the data being lost due to systematic collection
+errors.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{figures/loan_histograms.png}
+    \caption{Feature-wise histograms of the Loan Amount dataset (numeric features).}
+    \label{fig:loan_histograms}
+\end{figure}
+
+\subsubsection*{Inference}
+
+The feature distributions exhibit several important characteristics.
+
+\begin{itemize}
+
+\item \textbf{ApplicantIncome} and
+\textbf{CoapplicantIncome} are highly right-skewed.
+
+Only a small number of applicants possess extremely high incomes,
+creating long tails in both distributions.
+
+These high-income observations correspond directly to the
+
+\begin{itemize}
+    \item 49 IQR outliers for ApplicantIncome, and
+    \item 18 IQR outliers for CoapplicantIncome.
+\end{itemize}
+
+\item \textbf{Loan\_Amount\_Term} is dominated by a single value of
+
+\[
+360 \text{ months}
+\]
+
+which represents the standard 30-year loan tenure, while only a few
+applications correspond to shorter repayment periods.
+
+\item \textbf{Credit\_History} behaves as a binary variable rather than a
+continuous numerical feature.
+
+Consequently, the IQR method incorrectly identifies approximately
+85 observations as outliers.
+
+This is a well-known limitation of applying outlier detection techniques
+designed for continuous variables to near-binary data.
+
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{figure}[H]
+\centering
+
+\begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/loan_boxplot.png}
+    \caption{Boxplots of the Loan Amount numeric features.}
+    \label{fig:loan_boxplot}
+\end{minipage}
+\hfill
+\begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/loan_heatmap.png}
+    \caption{Correlation heatmap of the Loan Amount numeric features.}
+    \label{fig:loan_heatmap}
+\end{minipage}
+
+\end{figure}
+
+\subsubsection*{Inference}
+
+The boxplots clearly illustrate that income-related outliers dominate the
+scale of the remaining numerical variables.
+
+Because all variables are plotted on the same axis,
+
+\begin{itemize}
+    \item ApplicantIncome and CoapplicantIncome exhibit extremely large
+          ranges.
+
+    \item Credit\_History appears as a thin bar close to the value
+
+\[
+1,
+\]
+
+since nearly
+
+\[
+84\%
+\]
+
+of applicants possess a positive credit history.
+
+\end{itemize}
+
+The correlation heatmap indicates only weak pairwise relationships among
+the remaining numerical predictors.
+
+No feature exhibits a strong linear relationship either
+
+\begin{itemize}
+    \item with another predictor, or
+
+    \item with the regression target,
+          \texttt{LoanAmount}.
+\end{itemize}
+
+This weak correlation foreshadows the relatively poor regression
+performance discussed later.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{figures/loan_target_distribution.png}
+    \caption{Distribution of the regression target \texttt{LoanAmount} (in thousands).}
+    \label{fig:loan_target}
+\end{figure}
+
+\subsubsection*{Inference}
+
+The target variable \texttt{LoanAmount} exhibits a pronounced
+right-skewed distribution.
+
+Most approved loans are concentrated between approximately
+
+\[
+100
+\]
+
+and
+
+\[
+170
+\]
+
+(thousand), while relatively few loans extend to values as high as
+
+\[
+700.
+\]
+
+This skewness causes ordinary linear regression models to be
+disproportionately influenced by a small number of large-loan observations.
+
+Consequently, tree-based ensemble methods such as
+
+\begin{itemize}
+    \item Random Forest Regressor
+    \item Gradient Boosting Regressor
+\end{itemize}
+
+outperform Linear Regression, Ridge Regression, and Lasso Regression in
+the final experimental comparison.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Email Spam Dataset}
+\label{subsec:email_spam}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsubsection*{High-Dimensional Dataset -- Detailed Feature Plots Skipped}
+
+The Email Spam dataset contains approximately \textbf{3000 word-count
+features}, making it a high-dimensional dataset. To maintain readability and
+avoid generating an excessive number of plots, the
+\texttt{perform\_eda()} routine automatically skipped feature-wise
+histograms, boxplots, and correlation heatmaps.
+
+Instead, only the target-class distribution was visualized, while summary
+statistics and outlier information were printed to the console.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.65\textwidth]{figures/email_target_distribution.png}
+    \caption{Class distribution of the target variable \texttt{Prediction}
+    (0 = Ham, 1 = Spam).}
+    \label{fig:email_target_distribution}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsubsection*{Inference}
+
+Since the dataset contains
+
+\[
+3000
+\]
+
+word-count features, generating individual feature plots would require
+
+\begin{itemize}
+    \item 3000 histograms,
+    \item 3000 boxplots,
+    \item and a
+    \[
+    3000 \times 3000
+    \]
+    correlation matrix.
+\end{itemize}
+
+Such visualizations would be computationally expensive and practically
+impossible to interpret.
+
+Therefore, the exploratory data analysis routine automatically suppressed
+these plots and generated only the target-class distribution.
+
+The class distribution indicates a moderate imbalance between the two
+classes.
+
+Approximately
+
+\[
+71\%
+\]
+
+of the emails belong to the
+
+\[
+\texttt{Ham}
+\]
+
+class, whereas approximately
+
+\[
+29\%
+\]
+
+belong to the
+
+\[
+\texttt{Spam}
+\]
+
+class.
+
+This observation is consistent with the reported mean value of the
+\texttt{Prediction} column,
+
+\[
+\overline{\texttt{Prediction}} = 0.290.
+\]
+
+Because of this class imbalance, model evaluation relied on multiple
+performance metrics rather than overall accuracy alone.
+
+The reported metrics include
+
+\begin{itemize}
+    \item Accuracy
+    \item Precision
+    \item Recall
+    \item Weighted F1-score
+\end{itemize}
+
+to provide a more reliable assessment of classifier performance.
+
+The exploratory statistics also revealed that the most frequently occurring
+word-count features, including
+
+\begin{itemize}
+    \item \texttt{the}
+    \item \texttt{to}
+    \item \texttt{ect}
+    \item \texttt{and}
+    \item \texttt{for}
+\end{itemize}
+
+have extremely large occurrence counts and correspondingly high IQR outlier
+counts, ranging approximately from
+
+\[
+400
+\]
+
+to
+
+\[
+665
+\]
+
+observations.
+
+This behavior is expected because these words are among the most common
+English stop words and naturally appear in a large proportion of emails.
+
+Such high-frequency features contribute relatively little toward
+distinguishing spam from legitimate emails.
+
+Consequently, applying feature selection using
+
+\[
+\texttt{SelectKBest}(\texttt{f\_classif})
+\]
+
+to retain only the most discriminative features is an effective strategy for
+reducing dimensionality while preserving classification performance.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Handwritten Character Recognition Dataset}
+\label{subsec:handwritten_characters}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsubsection*{High-Dimensional Dataset -- Detailed Feature Plots Skipped}
+
+The Handwritten Character Recognition dataset consists of
+
+\[
+1024
+\]
+
+pixel features obtained by flattening each
+
+\[
+32 \times 32
+\]
+
+grayscale image into a one-dimensional feature vector.
+
+Since the dataset contains a very large number of features, the
+\texttt{perform\_eda()} routine automatically skipped the generation of
+
+\begin{itemize}
+    \item Feature-wise histograms,
+    \item Boxplots,
+    \item Correlation heatmaps.
+\end{itemize}
+
+Instead, only the target-class distribution was visualized, while summary
+statistics and outlier information were reported in the console.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{figures/handwritten_target_distribution.png}
+    \caption{Class distribution across the 62 handwritten character labels (0--9, A--Z, a--z).}
+    \label{fig:handwritten_target_distribution}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsubsection*{Inference}
+
+The dataset contains
+
+\[
+62
+\]
+
+distinct output classes representing
+
+\begin{itemize}
+    \item Digits (0--9),
+    \item Uppercase letters (A--Z),
+    \item Lowercase letters (a--z).
+\end{itemize}
+
+Since each image is represented using
+
+\[
+1024
+\]
+
+flattened pixel values, detailed feature-wise visualizations were omitted
+for the same readability and computational reasons discussed for the Email
+Spam dataset.
+
+The target-class distribution is relatively uniform across all
+62 character classes.
+
+Each class contains approximately
+
+\[
+50\text{--}60
+\]
+
+samples, indicating that class imbalance is not a significant concern for
+this dataset.
+
+Instead, the primary challenge lies in the extremely high dimensionality of
+the feature space.
+
+More importantly, flattening each
+
+\[
+32 \times 32
+\]
+
+image into a one-dimensional vector destroys the inherent two-dimensional
+spatial relationships between neighboring pixels.
+
+As a result, traditional machine learning algorithms operate on independent
+pixel values rather than exploiting local spatial structures.
+
+Consequently, classical classifiers such as
+
+\begin{itemize}
+    \item Logistic Regression,
+    \item Support Vector Machines,
+    \item Decision Trees,
+    \item Random Forests,
+    \item Gradient Boosting,
+\end{itemize}
+
+are unable to fully capture the visual patterns present in handwritten
+characters.
+
+This limitation is discussed further in the Discussion section, where the
+relatively lower classification accuracy is attributed primarily to the
+loss of spatial information rather than deficiencies in the learning
+algorithms themselves.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Data Preprocessing}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+A single reusable preprocessing pipeline,
+\texttt{run\_ml\_pipeline()}, was applied uniformly to all five datasets to
+ensure consistency throughout the experiment.
+
+The preprocessing steps are summarized below.
+
+\begin{enumerate}
+
+\item \textbf{Missing Value Handling}
+
+Numeric attributes were imputed using the column median through
+
+\[
+\texttt{SimpleImputer(strategy='median')}.
+\]
+
+Categorical attributes were imputed using the most frequently occurring
+value through
+
+\[
+\texttt{SimpleImputer(strategy='most\_frequent')}.
+\]
+
+Among the five datasets, only the Loan Amount Prediction dataset required
+missing-value imputation, since the remaining four datasets contained no
+missing values.
+
+\vspace{0.3cm}
+
+\item \textbf{Categorical Encoding}
+
+Every categorical feature was transformed into numerical form using
+
+\[
+\texttt{LabelEncoder}.
+\]
+
+Similarly, non-numeric target variables such as
+
+\begin{itemize}
+    \item Species,
+    \item Prediction,
+    \item Outcome,
+    \item Label
+\end{itemize}
+
+were encoded before model training to ensure compatibility with
+Scikit-Learn classifiers.
+
+\vspace{0.3cm}
+
+\item \textbf{Feature Scaling}
+
+All numerical predictor variables were standardized using
+
+\[
+\texttt{StandardScaler},
+\]
+
+which transforms every feature according to
+
+\[
+z=\frac{x-\mu}{\sigma},
+\]
+
+where
+
+\begin{itemize}
+    \item $x$ is the original feature value,
+    \item $\mu$ is the feature mean,
+    \item $\sigma$ is the standard deviation.
+\end{itemize}
+
+This produces standardized features having
+
+\[
+\mu=0,\qquad
+\sigma=1.
+\]
+
+Feature scaling was performed for every dataset before model training.
+
+\vspace{0.3cm}
+
+\item \textbf{Train--Test Split}
+
+Every dataset was divided into
+
+\[
+80\% \text{ training}
+\]
+
+and
+
+\[
+20\% \text{ testing}
+\]
+
+using
+
+\[
+\texttt{test\_size}=0.2,
+\qquad
+\texttt{random\_state}=42.
+\]
+
+For all classification datasets,
+
+\[
+\texttt{stratify}=y
+\]
+
+was enabled to preserve the original class distribution in both the
+training and testing sets.
+
+The Loan Amount Prediction dataset is a regression problem; therefore,
+stratified sampling was not applied.
+
+\vspace{0.3cm}
+
+\item \textbf{Feature Engineering / Feature Selection}
+
+Feature selection was applied only to high-dimensional datasets.
+
+\begin{itemize}
+
+\item \textbf{Email Spam Dataset}
+
+The original
+
+\[
+3000
+\]
+
+word-count features were reduced to the
+
+\[
+300
+\]
+
+most informative features using
+
+\[
+\texttt{SelectKBest}(f_{\text{classif}}).
+\]
+
+\vspace{0.2cm}
+
+\item \textbf{Handwritten Character Dataset}
+
+The original
+
+\[
+1024
+\]
+
+pixel features were reduced to the top
+
+\[
+100
+\]
+
+features using
+
+\[
+\texttt{SelectKBest}(f_{\text{classif}}).
+\]
+
+\vspace{0.2cm}
+
+\item \textbf{Iris, Diabetes, and Loan Amount}
+
+No feature selection was applied because these datasets already contain
+relatively few predictors, all of which were retained for model training.
+
+\end{itemize}
+
+\end{enumerate}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Results}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Five datasets and up to eight machine learning algorithms were evaluated
+during the experiment.
+
+Since the datasets differ considerably in their characteristics and machine
+learning objectives, the experimental results are presented separately for
+each dataset instead of combining them into a single comparison table.
+
+All numerical values reported in the following sections are taken directly
+from the captured output of the Jupyter Notebook.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Iris Dataset (Classification)}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{table}[H]
+\centering
+\caption{Performance Comparison on the Iris Dataset}
+\label{tab:iris_results}
+
+\renewcommand{\arraystretch}{1.2}
+
+\begin{adjustbox}{width=\textwidth}
+\begin{tabular}{|l|c|c|c|c|c|}
+
+\toprule
+
+\textbf{Model}
+&
+\textbf{Accuracy}
+&
+\textbf{Precision}
+&
+\textbf{Recall}
+&
+\textbf{F1-Score}
+&
+\textbf{ROC-AUC}
+
+\\
+
+\midrule
+
+Logistic Regression &
+0.9333 &
+0.9333 &
+0.9333 &
+0.9333 &
+0.9967 \\
+
+K-Nearest Neighbors &
+0.9333 &
+0.9444 &
+0.9333 &
+0.9327 &
+0.9933 \\
+
+SVM (RBF Kernel) &
+0.9667 &
+0.9697 &
+0.9667 &
+0.9666 &
+0.9967 \\
+
+SVM (Linear Kernel) &
+\textbf{1.0000} &
+\textbf{1.0000} &
+\textbf{1.0000} &
+\textbf{1.0000} &
+\textbf{1.0000} \\
+
+Decision Tree &
+0.9000 &
+0.9024 &
+0.9000 &
+0.8997 &
+0.9250 \\
+
+Random Forest &
+0.9000 &
+0.9024 &
+0.9000 &
+0.8997 &
+0.9933 \\
+
+Gradient Boosting &
+0.9000 &
+0.9024 &
+0.9000 &
+0.8997 &
+0.9933 \\
+
+Gaussian Naive Bayes &
+0.9667 &
+0.9697 &
+0.9667 &
+0.9666 &
+0.9900 \\
+
+\bottomrule
+
+\end{tabular}
+\end{adjustbox}
+
+\end{table}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Diabetes Dataset (Classification)}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{table}[H]
+\centering
+\caption{Performance Comparison on the Diabetes Dataset}
+\label{tab:diabetes_results}
+
+\renewcommand{\arraystretch}{1.2}
+
+\begin{adjustbox}{width=\textwidth}
+\begin{tabular}{|l|c|c|c|c|c|}
+
+\toprule
+
+\textbf{Model}
+&
+\textbf{Accuracy}
+&
+\textbf{Precision}
+&
+\textbf{Recall}
+&
+\textbf{F1-Score}
+&
+\textbf{ROC-AUC}
+
+\\
+
+\midrule
+
+Logistic Regression &
+0.7143 &
+0.7065 &
+0.7143 &
+0.7084 &
+0.8230 \\
+
+K-Nearest Neighbors &
+0.7078 &
+0.7023 &
+0.7078 &
+0.7043 &
+0.7458 \\
+
+SVM (RBF Kernel) &
+0.7468 &
+0.7438 &
+0.7468 &
+0.7450 &
+0.7933 \\
+
+SVM (Linear Kernel) &
+0.7208 &
+0.7126 &
+0.7208 &
+0.7141 &
+0.8275 \\
+
+Decision Tree &
+0.7208 &
+0.7108 &
+0.7208 &
+0.7102 &
+0.6657 \\
+
+Random Forest &
+0.7532 &
+0.7497 &
+0.7532 &
+0.7509 &
+0.8145 \\
+
+Gradient Boosting &
+\textbf{0.7532} &
+0.7483 &
+0.7532 &
+0.7496 &
+\textbf{0.8394} \\
+
+Gaussian Naive Bayes &
+0.7078 &
+0.7179 &
+0.7078 &
+0.7114 &
+0.7728 \\
+
+\bottomrule
+
+\end{tabular}
+\end{adjustbox}
+
+\end{table}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Loan Amount Prediction (Regression)}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{table}[H]
+\centering
+\caption{Performance Comparison on the Loan Amount Prediction Dataset}
+\label{tab:loan_results}
+
+\renewcommand{\arraystretch}{1.2}
+
+\begin{adjustbox}{width=\textwidth}
+\begin{tabular}{lcccccc}
+
+\toprule
+
+\textbf{Model}
+&
+\textbf{MAE}
+&
+\textbf{MSE}
+&
+\textbf{RMSE}
+&
+$\mathbf{R^2}$
+&
+\textbf{MAPE (\%)}
+&
+\textbf{Adjusted $R^2$}
+
+\\
+
+\midrule
+
+Linear Regression
+&
+36.6989
+&
+3324.82
+&
+57.6612
+&
+0.0981
+&
+35.4658
+&
+0.0054
+\\
+
+Ridge Regression
+&
+36.7015
+&
+3322.14
+&
+57.6380
+&
+0.0988
+&
+35.4790
+&
+0.0062
+\\
+
+Lasso Regression
+&
+36.1555
+&
+3273.65
+&
+57.2158
+&
+0.1120
+&
+35.3014
+&
+0.0207
+\\
+
+Decision Tree Regressor
+&
+48.9832
+&
+5382.09
+&
+73.3627
+&
+--0.4600
+&
+42.2095
+&
+--0.6101
+\\
+
+Random Forest Regressor
+&
+33.9438
+&
+3132.68
+&
+55.9703
+&
+0.1502
+&
+30.5887
+&
+0.0628
+\\
+
+Gradient Boosting Regressor
+&
+\textbf{33.4631}
+&
+\textbf{2897.25}
+&
+\textbf{53.8261}
+&
+\textbf{0.2141}
+&
+\textbf{29.7789}
+&
+\textbf{0.1333}
+\\
+
+Support Vector Regression (SVR)
+&
+39.5036
+&
+3517.44
+&
+59.3080
+&
+0.0458
+&
+36.2423
+&
+--0.0523
+\\
+
+\bottomrule
+
+\end{tabular}
+\end{adjustbox}
+
+\end{table}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Email Spam Classification}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{table}[H]
+\centering
+\caption{Performance Comparison on the Email Spam Dataset}
+\label{tab:spam_results}
+
+\renewcommand{\arraystretch}{1.2}
+
+\begin{adjustbox}{width=\textwidth}
+\begin{tabular}{|l|c|c|c|c|c|}
+
+\toprule
+
+\textbf{Model}
+&
+\textbf{Accuracy}
+&
+\textbf{Precision}
+&
+\textbf{Recall}
+&
+\textbf{F1-Score}
+&
+\textbf{ROC-AUC}
+
+\\
+
+\midrule
+
+Logistic Regression
+&
+0.9459
+&
+0.9470
+&
+0.9459
+&
+0.9463
+&
+0.9871
+\\
+
+K-Nearest Neighbors
+&
+0.9266
+&
+0.9261
+&
+0.9266
+&
+0.9263
+&
+0.9727
+\\
+
+SVM (RBF Kernel)
+&
+0.9353
+&
+0.9347
+&
+0.9353
+&
+0.9347
+&
+0.9864
+\\
+
+SVM (Linear Kernel)
+&
+0.9382
+&
+0.9407
+&
+0.9382
+&
+0.9388
+&
+0.9842
+\\
+
+Decision Tree
+&
+0.9246
+&
+0.9243
+&
+0.9246
+&
+0.9244
+&
+0.9055
+\\
+
+Random Forest
+&
+\textbf{0.9604}
+&
+\textbf{0.9603}
+&
+\textbf{0.9604}
+&
+\textbf{0.9603}
+&
+\textbf{0.9932}
+\\
+
+Gradient Boosting
+&
+0.9575
+&
+0.9577
+&
+0.9575
+&
+0.9576
+&
+0.9904
+\\
+
+Gaussian Naive Bayes
+&
+0.8705
+&
+0.8799
+&
+0.8705
+&
+0.8603
+&
+0.9747
+\\
+
+\bottomrule
+
+\end{tabular}
+\end{adjustbox}
+
+\end{table}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Handwritten Character Recognition}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{table}[H]
+\centering
+\caption{Performance Comparison on the Handwritten Character Recognition Dataset}
+\label{tab:handwritten_results}
+
+\renewcommand{\arraystretch}{1.2}
+
+\begin{adjustbox}{width=\textwidth}
+\begin{tabular}{|l|c|c|c|c|c|}
+
+\toprule
+
+\textbf{Model}
+&
+\textbf{Accuracy}
+&
+\textbf{Precision}
+&
+\textbf{Recall}
+&
+\textbf{F1-Score}
+&
+\textbf{ROC-AUC}
+
+\\
+
+\midrule
+
+Logistic Regression
+&
+0.2478
+&
+0.2656
+&
+0.2478
+&
+0.2468
+&
+0.8347
+\\
+
+K-Nearest Neighbors
+&
+0.2933
+&
+0.3283
+&
+0.2933
+&
+0.2892
+&
+0.7862
+\\
+
+SVM (RBF Kernel)
+&
+0.3460
+&
+0.3818
+&
+0.3460
+&
+0.3467
+&
+0.8987
+\\
+
+SVM (Linear Kernel)
+&
+0.2903
+&
+0.2966
+&
+0.2903
+&
+0.2853
+&
+0.8618
+\\
+
+Decision Tree
+&
+0.2023
+&
+0.2275
+&
+0.2023
+&
+0.2082
+&
+0.5959
+\\
+
+Random Forest
+&
+\textbf{0.3519}
+&
+0.3569
+&
+\textbf{0.3519}
+&
+0.3464
+&
+0.8981
+\\
+
+Gradient Boosting
+&
+0.2390
+&
+0.2503
+&
+0.2390
+&
+0.2359
+&
+0.8320
+\\
+
+Gaussian Naive Bayes
+&
+0.1188
+&
+0.2285
+&
+0.1188
+&
+0.1062
+&
+0.7527
+\\
+
+\bottomrule
+
+\end{tabular}
+\end{adjustbox}
+
+\end{table}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Discussion}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The experimental results demonstrate that model performance depends far
+more strongly on dataset characteristics than on the choice of machine
+learning algorithm alone.
+
+The Iris dataset represents the easiest learning problem.
+
+Its four clean and highly discriminative features allow even relatively
+simple models to achieve excellent performance.
+
+The linear-kernel Support Vector Machine achieved perfect
+
+\[
+100\%
+\]
+
+classification accuracy, while even the weakest models exceeded
+
+\[
+90\%.
+\]
+
+The Diabetes dataset proved considerably more challenging.
+
+Most algorithms achieved approximately
+
+\[
+75\%
+\]
+
+accuracy, largely because of the disguised missing values represented as
+zeros and the natural overlap between diabetic and non-diabetic patient
+measurements.
+
+The Loan Amount Prediction dataset produced the weakest regression
+results.
+
+The best-performing model,
+
+Gradient Boosting Regressor,
+
+achieved only
+
+\[
+R^2=0.214,
+\]
+
+indicating that the available predictor variables provide limited
+information regarding the approved loan amount.
+
+In practical banking applications, loan approval depends upon many
+additional variables that are absent from this dataset.
+
+The Email Spam dataset achieved excellent classification performance.
+
+Random Forest obtained
+
+\[
+96.04\%
+\]
+
+accuracy together with a
+
+\[
+0.993
+\]
+
+ROC-AUC score.
+
+The strong performance can be attributed to the highly discriminative
+nature of word-frequency features for spam detection.
+
+The Handwritten Character Recognition dataset was the most difficult
+classification task.
+
+Although Random Forest achieved the highest accuracy among the evaluated
+models,
+
+\[
+35.19\%
+\]
+
+remains substantially below the performance expected from modern deep
+learning methods.
+
+The primary limitation arises from representing each
+
+\[
+32\times32
+\]
+
+image as a flattened vector, thereby discarding spatial information that
+Convolutional Neural Networks naturally exploit.
+
+Across all five datasets, tree-based ensemble methods such as Random
+Forest and Gradient Boosting consistently ranked among the strongest
+performers.
+
+Conversely, Gaussian Naive Bayes generally performed poorly whenever its
+conditional independence assumption was violated.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Conclusion}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+This experiment successfully explored the functionality of the Python
+libraries NumPy, Pandas, SciPy, Scikit-Learn, and Matplotlib through a
+single reusable machine learning pipeline.
+
+Five structurally different public datasets were analyzed using a common
+workflow consisting of
+
+\begin{itemize}
+    \item Exploratory Data Analysis,
+    \item Data Preprocessing,
+    \item Feature Selection,
+    \item Model Training,
+    \item Performance Evaluation.
+\end{itemize}
+
+The correct machine learning task was identified for every dataset, and
+appropriate feature-selection techniques were applied to
+high-dimensional datasets using the ANOVA F-test through
+\texttt{SelectKBest}.
+
+Eight classification algorithms and seven regression algorithms were
+benchmarked using a common evaluation framework.
+
+The results demonstrate that classical machine learning algorithms
+
+\begin{itemize}
+    \item perform exceptionally well on clean, low-dimensional datasets
+          such as Iris,
+
+    \item achieve strong performance on high-dimensional text data such
+          as Email Spam,
+
+    \item obtain moderate performance on noisy clinical datasets such as
+          Diabetes,
+
+    \item perform relatively poorly when important predictive variables
+          are absent, as in Loan Amount Prediction,
+
+    \item and are fundamentally limited when applied directly to
+          flattened image pixels instead of spatial image
+          representations.
+\end{itemize}
+
+Overall, the experiment provides a comprehensive demonstration of
+end-to-end machine learning using standard Python libraries.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{References}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{enumerate}
+
+\item F. Pedregosa \textit{et al.},
+``Scikit-learn: Machine Learning in Python,''
+\textit{Journal of Machine Learning Research},
+vol.~12,
+pp.~2825--2830,
+2011.
+
+\item C. R. Harris \textit{et al.},
+``Array Programming with NumPy,''
+\textit{Nature},
+vol.~585,
+pp.~357--362,
+2020.
+
+\item W. McKinney,
+``Data Structures for Statistical Computing in Python,''
+Proceedings of the 9th Python in Science Conference,
+pp.~56--61,
+2010.
+
+\item P. Virtanen \textit{et al.},
+``SciPy 1.0: Fundamental Algorithms for Scientific Computing in Python,''
+\textit{Nature Methods},
+vol.~17,
+pp.~261--272,
+2020.
+
+\item J. D. Hunter,
+``Matplotlib: A 2D Graphics Environment,''
+\textit{Computing in Science \& Engineering},
+vol.~9,
+no.~3,
+pp.~90--95,
+2007.
+
+\item Kaggle.
+\textit{Iris Species Dataset}.
+
+\url{https://www.kaggle.com/datasets/uciml/iris}
+
+\item Kaggle.
+\textit{Pima Indians Diabetes Database}.
+
+\url{https://www.kaggle.com/datasets/uciml/pima-indians-diabetes-database}
+
+\item Kaggle.
+\textit{Loan Prediction Problem Dataset}.
+
+\url{https://www.kaggle.com/datasets/altruistdelhite04/loan-prediction-problem-dataset}
+
+\item Kaggle.
+\textit{Email Spam Classification Dataset}.
+
+\url{https://www.kaggle.com/datasets/balaka18/email-spam-classification-dataset-csv}
+
+\item Kaggle.
+\textit{Handwritten Character Recognition Dataset}.
+
+\url{https://www.kaggle.com/datasets/vaibhao/handwritten-characters}
+
+\end{enumerate}
+
+\end{document}
